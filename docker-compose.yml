@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  jenkins:
+    container_name: jenkins_master
+    build: .
+    restart: always
+    ports:
+       - "8081:8080"
+    volumes:
+        - jenkins-data:/var/jenkins_home
+        - jenkins-docker-certs:/certs/client:ro
+    depends_on:
+      - dind
+    links:
+      - "dind:docker"
+    environment:
+      TZ: "Asia/Seoul"
+      DOCKER_HOST: "tcp://docker:2376"
+      DOCKER_CERT_PATH: "/certs/client"
+      DOCKER_TLS_VERIFY: "1"
+    networks:
+      - jenkins_local
+
+  dind:
+    image: docker:dind
+    container_name: jenkins_docker
+    privileged: true
+    restart: always
+    environment:
+      DOCKER_TLS_CERTDIR: /certs
+    expose:
+      - "3000"
+      - "2376"
+    volumes:
+      - jenkins-docker-certs:/certs/client
+      - jenkins-data:/var/jenkins_home
+    networks:
+      - jenkins_local
+
+networks:
+  jenkins_local:
+
+volumes:
+  jenkins-docker-certs:
+  jenkins-data:
